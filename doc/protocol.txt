@@ -1,0 +1,304 @@
+LOCODOCO PROTOCOL SPECIFICATION 1.0
+=========================================================================
+
+1  General description
+
+   The locodoco protocol is designed to establish a reliable way of communication
+   between locodoco devices and the master unit (base station). In order to
+   avoid collisions, the protocol utilizes timeslots.
+
+   In general a protocol run is divided into two periods: Master sending
+   phase and client sending phase. While the master phase may be of variable
+   length, the client sending phase is divided into fixed-length timeslots for
+   each client.
+
+   Here's an example protocol run:
+
+   +---------+------+----+---+   +- C0 -+ (C1) +- C2 -+ (C3) + (C4) +- C5 -+
+   | CMD0    | CMD1 |CMD2|END|   |RESP0 |      |RESP1 |             :RESP3 |
+   +---------+------+----+---+   +------+      +------+      +      +------+
+   End of master timeslot -'        |       |            |      |   |
+   |- Master timeslot  -----|       |     [Empty/Unused timeslots]  |
+                Grace period |---|  [Reponseses from Clients 0, 2 & 5]
+   
+   Note: Due to varying data rates for implementations, timeslot lengths are
+   denoted in bytes, rather than absolute times.
+
+1.1 Timeslot assignment
+
+   Timeslots are requested by clients via a "timeslot assignment request" and
+   are assigned by the master via the "timeslot assignment acknowledge". For the
+   purpose of timeslot assignment, 4 additional timeslots with a fixed length of
+   12 bytes each are resrved for this type of request.
+   When subscribing to a network, the client must choose the timeslot for its
+   assignment request at random in order to prevent collisions the event that
+   multiple devices are powered on at the same time.
+
+
+1.1.1 Timeslot overlapping
+
+   Timeslots may be assigned in a manner that they overlap if the clients using
+   these timelots are able to perform channel occupancy detection. When detecting
+   that the channel is occupied, a client should refrain from sending and schedule
+   the packet for transmission in the next cycle.
+
+
+   
+1.2 Packet format
+   
+   |  8b  |  8b  |  8b  |    16b    |    16b    |len-3 Bytes|
+   +------+------+------+-----+-----+-----+-----+--  ...  --+
+   |      |      |      |           |           |           |
+   | LEN  | TYPE |LTYPE | CHECKSUM  |  ADDRESS  | PAYLOAD   |
+   |      |      |      |           |           |           |
+   +------+------+------+-----+-----+-----+-----+--  ...  --+
+
+   The basic packet format contains three addional bytes (LTYPE and ADDRESS)
+   that indicate the locodoco command to follow and the source/destination address.
+   Some commands have an implicit fixed length, while others may need the LEN field
+   in order to determine length of the command. Since the length field is (in most
+   cases) already set from the underlying device driver or protocol, the field is
+   never omitted.
+
+
+
+2 Commands
+
+   The address field contains the address of the sending or receiving client device.
+   All clients communicate exclusively with the master and destination/source address
+   is therefore implicitly the master address (0x0000).
+   
+   Some commands require to be acknowledged by the target device. Unless
+   otherwise noted, a reply from the target device is made by sending the
+   same command again with its own address set in the address field. Transmission
+   of the payload data may be omitted in acknowledgement packets and should
+   not be checked on the receipient side.
+
+   In general, two distinct command types exist: Query and setting commands.
+   An acknowledgement to a set-command is signalled by sending an empty package
+   with the same LTYPE field. Queries are responded to by sending a package
+   with the same LTYPE field and the response included in the payload field.
+
+
+2.1 Table of commands
+
+   The following list provides a list of commands in protocol version 1.0:
+
+   LTYPE BYTE   #Follow-up   Function
+   [SET],[QRY]     Bytes   
+
+   0x00              0       Emergency stop
+   0x01              2       End of master timeslot countdown
+        0x02         5       Timeslot assignment request
+   0x03              8       Timeslot assignment acknowledge
+   0x04              0       Resume operation
+   0x05              0       Disassociation
+   0x06,0x07      2+n,2+n    Configuration blob setting/query
+   0x08              0       Reboot (to bootloader)
+   0x09              2       Initiate calibration
+
+   0x10,0x20         4       Light control
+   0x11,0x21         4       Servo control
+   0x12,0x22         1       Coupler control
+   0x13,0x23         1       Pantograph control
+   0x14,0x24         1       Smoke generator control
+   0x15,0x25         2       Speed control (immediate setting)
+   0x16,0x26         6       Position (set & report)
+   0x17,0x27         2       Target speed setting
+   0x18,0x28         6       Drive-to command
+
+   
+   
+2.1.1 Command "Emergency stop"
+   
+   All devies must stop their engines immediately when receiving this command.
+   Peripheral devices, such as lighting or smoke generators may be left in their
+   current state.
+
+
+2.1.2 Command "End of master timeslot countdown"
+
+   The countdown marks the end of the base/master timeslot and includes the maximum
+   amount of bytes that are to be sent within the timeslot (thereby, implicitly the
+   timeslot length).
+   The command may be sent multiple times (each with decremented countdown value)
+   by the master in order to improve reliability. When transmitting the command
+   mutliple times, the master must send the command with the appropriate delay in
+   between the messages.
+   
+   
+2.1.3 Timeslot assignment request
+   
+   Whenever a client node enters a cell, it requires a timeslot in order to respond
+   to master commands.
+
+   The address field for the request should be set to the desired/old address.
+
+   The payload field contains 5 additional bytes as follows:
+
+   * Byte 0:     Capability flags
+    ** bit 0: when set, this indicates that the device is able to perform channel
+              occupancy detection.
+    ** bits 1-7: unused/RFU
+
+   * Bytes 1-4:  UUID of device
+     This field includes the unique ID of the device
+
+
+2.1.4 Timeslot assignment acknowledge
+   
+   This message is used to assign a timeslot to a client node or change its current
+   timeslot. If the client requested a timeslot, the master sets the address field
+   to address 0x0000 - in this case, a client must temporarily accept & parse commands
+   sent to this address.
+   If the master needs to change the timeslot, the client address should be set to the
+   current address of the client, since the client already is in active mode at that
+   time.
+
+   In any case, the client must check if the UUID of the timeslot assignment command
+   matches its UUID and upon successful check, must set the timeslot and address
+   accordingly.
+
+
+2.1.5 Resume operation
+   
+   This command is the inverse to the emergency stop command and instructs the devices
+   to resume operation.
+
+
+2.1.6 Disassociation
+   
+   Whenever a device leaves a cell, the client should send the disassociation command
+   to let the master know that it may re-use the assigned timeslot for another device.
+
+
+2.1.7 Configuration blob setting / query
+   
+   This command is used to set or query the device-specific configuration blob. The
+   first two bytes of the payload field denote the offset of the data in the following
+   bytes. The length of the response or request is implicitly given as:
+   	lenth - header_size - 2
+
+
+2.1.8 Reboot command
+   
+   This command instructs the device to reboot and execute the bootloader.
+
+
+2.1.9 Initiate calibration
+
+   This command starts the speed calibration process of the loco decoder. The loco will
+   drive forward until it reaches the first waypoint, start a timer and then measure the
+   time until it reaches the next waypoint. The distance between the two waypoints is set
+   in the two payload bytes of this command.
+
+
+2.1.10 Light control
+
+   The light control message contains 4 bytes - some of them have fixed functionality,
+   all others may be freely assigned.
+
+   The following table denotes the bits and their meaning. Bits are counted from right
+   to left.
+
+   BIT   FUNCTION
+   0,1   0x0 all lighting off
+         0x1 automatic front/rear lighting according to direction, front/rear cabin lights on
+         0x2 automatic front/read lighting according to direction, front/rear cabin lights off
+         0x3 manual front/rear lighting
+    2    passenger cabin / engine room / center light
+    3    front cabin light (cabin light for locos with one cabin)
+    4    back cabin light
+    5    front light white
+    6    front light red
+    7    additional front light (i.e. spotlight)
+    8    back light white
+    9    back light red
+   10    additional back light (i.e. spotlight)
+   11    gear lighting
+   13    siren light 1
+   14    siren light 2
+   14    oven fire
+
+   14,15 RFU
+   16-31 freely assignable
+   
+   Note: Locos with only one driver cabin should adhere to the front cabin light command
+
+2.1.11 Servo control
+   
+   The servo control command is used to assign a servo into a given position. The
+   unit is permille, instead of degrees, because the master has no way of knowing the
+   total values of servo positioning.
+
+   The payload bytes are interpreted as follows:
+   * Byte 0: Servo ID
+   * Byte 1: Transition time in 100ms steps
+   * Bytes 2,3: Position (permille)
+
+
+2.1.12 Coupler control
+  
+   The coupler control message is used to engage/release the couplers. A set bit denotes
+   the release of the coupler, a cleared bit denotes the "normal" position.
+
+   The distinct bits of the payload byte is interpreted as follows:
+   
+   * bit 0: coupler front
+   * bit 1: coupler back
+   * bits 2-7: unused / RFU
+
+
+2.1.13 Pantograph control
+   
+   The pantograph control message is used to lower or raise the pantographs. Locos
+   with only one pantograph should adhere to the front pantograph command.
+
+   * bit 0: pantograph front
+   * bit 1: pantograph rear
+   * bits 2-7: unused
+
+
+2.1.14 Smoke generator control
+   
+   The smoke generator message en- or disables the smoke generators. A set bit (1) enables
+   the function, a cleared bit (0) disables it.
+
+   * bit 0: front/main smoke generator
+   * bit 1: back smoke generator
+   * bit 2: additional smoke generator 1
+   * bit 3: additional smoke generator 2
+   ...
+   * bit 7: additional smoke generator 6
+
+
+2.1.15 Speed control / Target speed setting
+
+   There are two commands available for speed control: One is used to immediately set the speed,
+   the other is used to slowly in- or decrease the speed according to the loco's parameters.
+
+   The two payload bytes of both commands are interpreted as the speed value that is to be set.
+
+
+2.1.16 Position set & report
+
+   Clients may report their poistion (without a perceeding request from the master) by sending
+   a position report message (0x26). The first 2 bytes of the payload indicate the waypoint ID
+   of the last recognized waypoint, followed by 2 bytes denoting the distance in millimeters that
+   the loco has travelled since passing the waypoint.
+
+   A position value of -1 (0xFFFF) indicates that the loco is unaware of its current position.
+
+   Note that the position may also be set by the master through the position set command (0x16), for
+   example when the loco is powered on at a known position (train yard, shed, etc.).
+
+
+2.1.17 Drive-to command
+
+   The drive-to command instructs the loco to drive to a given waypoint and then either report
+   its position or stop at a given position behind the waypoint.
+
+   The first 4 bytes of the payload contain the target waypoint ID, the last 2 bytes denote the
+   distance (in mm) that the loco should pass until stopping. If the distance value is set to -1
+   (0xFFFF), the loco does not change its speed, but will report its position immediately after
+   having reached the waypoint.

@@ -1,0 +1,12 @@
++ libs & stuff
+--This line, and those below, will be ignored--
+
+A    decoder_big/powerso20.emp
+A    decoder_big/irf83xx.lib
+M    decoder_big/decoder_v2-cache.lib
+M    decoder_big/decoder_v2.sch
+M    decoder_big/decoder_v2.net
+M    decoder_big/decoder_v2.bak
+M    decoder_big/decoder_v2-cache.bak
+M    decoder_big/decoder_v2.pro
+A    decoder_big/powerso20.mod

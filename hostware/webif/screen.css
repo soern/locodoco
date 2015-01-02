@@ -1,0 +1,152 @@
+div#statwin,div#dbgwin
+{
+	width:320px;
+	font-size:10px;
+	font-family:monospace;
+	right:0px;
+	position:absolute;
+}
+div#statwin
+{
+	height:32px;
+	background-color:#FFFFEE;
+}
+div#dbgwin
+{
+	height:400px;
+	background-color:#FFEEEE;
+	padding:0px;
+	top:32px;
+}
+
+div#cmdwin
+{
+	position:absolute;
+	bottom:0px;
+}
+
+div#cmdwin,iframe#ct
+{
+	width:200px;
+	height:200px;
+	padding:0px;
+	margin:0px;
+}
+
+div#bfield
+{
+	position:absolute;
+	top:32px;
+	left:0px;
+	width:300px;
+}
+div#bfield a
+{
+	display:block;
+	float:left;
+	width:75px;
+	height:55px;
+	padding:0px;
+	margin:2px;
+	padding-top:25px;
+	border-style:solid;
+	border-width:2px;
+	border-color:#333;
+	text-align:center;
+	text-decoration:none;
+	font-size:18px;
+}
+
+table.dbgpacket
+{
+	padding:0px;
+	margin:0px;
+	display:block;
+	float:left;
+	width:300px;
+	border-bottom:1px;
+	border-bottom-style:dotted;
+	border-bottom-color:#999;
+	font-size:10px;
+}
+
+table.dbgpacket td,tr
+{
+	padding:inherit;
+	margin:inherit;
+}
+table.dbgpacket td.dbgtype
+{
+	background-color:#FF8000;
+}
+
+table.dbgpacket td.dbgdata[*^="non-ldc"]
+{
+	background-color:#CCC;
+}
+
+table.dbgpacket td.dbgaddr
+{
+	background-color:#FCC;
+	width:4em;
+	text-align:center;
+}
+
+table.dbgpacket td.dbgval
+{
+	background-color:#CFC;
+	width:4em;
+	text-align:right;
+}
+table.dbgpacket td.dbgrdata
+{
+	color:#999;
+}
+
+div.sbarbtn
+{
+	background-color:#999;
+	border-style:outset;
+	border-width:2px;
+	height:10px;
+	width:10px;
+}
+.sbarframe
+{
+	border-style:inset;
+	border-width:2px;
+	height:100px;
+	width:4em;
+	height:10em;
+	display:block;
+}
+
+body
+{
+	font-size:3em;
+	padding:0px;
+	margin:0px;
+}
+
+body#scrollinner
+{
+	height:200em;
+	overflow:hidden;
+}
+
+div#status
+{
+	position:fixed;
+	top:0px;
+	font-size:0.5em;
+}
+
+div#speed
+{
+	position:fixed;
+	top:33%;
+	font-size:1.5em;
+	background-color:#FFF;
+	width:100%;
+	text-align:center;
+}
