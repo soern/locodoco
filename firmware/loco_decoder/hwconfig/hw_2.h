@@ -31,6 +31,18 @@
 
 #define M_OCR_MAX 0x3ff
 
+/* DCC */
+#define DDR_DCC  DDRC
+#define PORT_DCC PORTC
+#define PIN_DCC  (_BV(PC0))
+
+#define DCC_INT_SETUP() \
+	PCMSK1 |= (_BV(PCINT8)); \
+	PCICR  |= (_BV(PCIE1))
+
+#define DCC_NUM_BYTES 16
+
+/* Lights */
 #define DDR_LIGHT_CABIN   DDRC
 #define DDR_LIGHT_FRONT   DDRC
 #define DDR_LIGHT_BACK    DDRC

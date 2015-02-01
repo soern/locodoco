@@ -9,6 +9,7 @@
 #include "motor.h"
 #include "adc.h"
 #include "locodoco.h"
+#include "os.h"
 
 int main (void)
 {
@@ -40,6 +41,7 @@ int main (void)
 	{
 		rfm12_tick();
 		motor_tick();
+		os_idle_tick();
 		ldc_packet_handler();
 	}
 }
