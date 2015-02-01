@@ -1,9 +1,19 @@
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+	<script type="text/javascript">
+	function ontst()
+	{
+		var t = new throttle();
+		var e = t.init();
+		document.getElementsByTagName('body')[0].appendChild(e);
+		console.log("asd" + e);
+	}
+	</script>
 	<script type="text/javascript" src="navigation.js"></script>
 	<link rel="stylesheet" type="text/css" href="mobile.css" />
 </head>
-<body>
+<body onload="ontst()">
 	<div id="navbar">
 		<a href="#" id="em_stop">STOP</a>
 		<span id="statustext">status</span>
@@ -11,6 +21,9 @@
 	<div id="loco_prototype">
 		<img src="img/loco_dummy.jpg" class="loco_image" />
 		<div class="throttle_h"></div>
+	</div>
+	<div id="log">
+
 	</div>
 </body>
 </html>

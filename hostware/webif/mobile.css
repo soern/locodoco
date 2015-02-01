@@ -2,3 +2,16 @@ div#loco_prototype
 {
 	visibility:hidden;
 }
+
+div.throttle
+{
+	width:50%;
+	height:3em;
+	padding:0px;
+	margin:0px;
+	overflow:hidden;
+	border-style:solid;
+	background-size: 400% 100%;
+	background-repeat:no-repeat;
+	background-image:url('img/speedbar.png');
+}
